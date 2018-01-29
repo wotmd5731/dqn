@@ -30,7 +30,7 @@ from env import Env
 env = Env(args)
 
 args.memory_capacity = 1000000
-args.learn_start = 10000
+args.learn_start = 1000000
 #args.render= True
 args.lr = 0.001
 from memory import ReplayMemory , episodic_experience_buffer

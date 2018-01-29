@@ -17,6 +17,10 @@ import argparse
 from argument import get_args
 args = get_args('DQN')
 
+#args.game = 'MountainCar-v0'
+#args.max_step = 200
+#args.action_space =3 
+#args.state_space = 2
 #args.memory_capacity = 1000
 #args.learn_start = 1000
 #args.render= True
@@ -28,7 +32,7 @@ memory = ReplayMemory(args)
 
 #args.memory_capacity = 1000
 #args.learn_start = 1000
-args.render= True
+#args.render= True
 from agent import Agent
 agent = Agent(args)
 
@@ -120,13 +124,16 @@ main loop
 """
 global_count = 0
 episode = 0
+args.epsilon = 0.1
 while episode < args.max_episode_length:
     episode += 1
     T=0
     state = env.reset()
+#    args.epsilon -= 0.8/args.max_episode_length
     while T < args.max_step:
         T += 1
         global_count += 1
+        
         action = agent.get_action(state)
        
         next_state , reward , done, _ = env.step(action)

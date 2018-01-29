@@ -17,7 +17,7 @@ FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
 Tensor = FloatTensor
-    
+glob_count=0    
 
 class Agent(nn.Module):
     
@@ -83,7 +83,7 @@ class Agent(nn.Module):
         
     def get_action(self,state,hx=0,cx=0,evaluate = False):
         action=0
-        
+        global glob_count
         if self.dqn_lstm:
             if random.random() <= self.epsilon and not evaluate:
                 action ,hx,cx = self.main_dqn(Variable(FloatTensor(state.reshape(1,1,self.state_space)),volatile=True),hx,cx) #return max index call [1] 
@@ -113,7 +113,11 @@ class Agent(nn.Module):
         
         
         else :
-            action = self.main_dqn(Variable(FloatTensor(state.reshape(1,self.state_space)),volatile=True)).max(1)[1].data[0] #return max index call [1] 
+            ret = self.main_dqn(Variable(FloatTensor(state.reshape(1,self.state_space)),volatile=True))
+#            glob_count += 1
+#            if glob_count%100 ==0 :
+#                print(ret.data)
+            action = ret.max(1)[1].data[0] #return max index call [1] 
         return action
         
     
@@ -143,19 +147,8 @@ class Agent(nn.Module):
         self.optimizer.step()
             
     def lstm_learn(self,memory):
-#        batch = memory.sample(self.batch_size)
-#        [states, actions, rewards, next_states, dones,hx,cx] = zip(*batch)
-        
-        
-#        loss = Variable(FloatTensor([0]))
-        
-        
-        # num_layers * num_directions, batch, hidden_size
-        
         seq_len = 8
         batch_size =32
-        #memory return return seq,batch,input
-#        [ss,aa,rr,ss_,dd]
         data = memory.sample(batch_size,seq_len)
         ss = data[:,:,0:4]
         aa = data[:,:,4]
@@ -169,22 +162,15 @@ class Agent(nn.Module):
         ss_ = Variable(Tensor(ss_),volatile=True).view(batch_size,seq_len,self.state_space)
         dd = Variable(Tensor(dd).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
         
-        
         cx = Variable(torch.zeros(1,1, self.hidden_size))
         hx = Variable(torch.zeros(1,1, self.hidden_size))
-        
         Q,hx,cx = self.main_dqn(ss[:,:4,:],hx,cx)
-        
         for ii in range(4,8):
             idd = 1 - dd[:,ii,:]
             irr = rr[:,ii,:]
             iaa = aa[:,ii,:]
-        
-#            Q,hx,cx = self.main_dqn(ss[:,ii,:].unsqueeze(1),hx,cx)
-            
             Q1, _, _ = self.target_dqn(ss_[:,ii,:].unsqueeze(1),hx,cx)
             target_act_val = (irr + self.discount * Q1.max(2)[0]*idd).view(-1)
-            
             Q2,hx,cx = self.main_dqn(ss[:,ii,:].unsqueeze(1),hx,cx)
             main_act_val = Q2.gather(2,iaa.unsqueeze(1)).view(-1)
             main_act_val.requires_grad=True

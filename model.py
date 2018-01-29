@@ -58,9 +58,9 @@ class DQN(nn.Module):
         self.fc3 = nn.Linear(args.hidden_size,args.action_space)
         
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
+        x = F.leaky_relu(self.fc3(x))
         return x
     
     def parameter_update(self , source):
@@ -83,14 +83,14 @@ class DQN_LSTM(nn.Module):
 #        hx = hx.view(1,1,-1)
 #        cx = cx.view(1,1,-1)
         
-        x = F.relu(self.fc1(x))
-#        x = F.relu(self.fc2(x))
+        x = F.leaky_relu(self.fc1(x))
+#        x = F.leaky_relu(self.fc2(x))
 #        hx, cx = self.lstm(x, (hx, cx))
         out , (hx, cx) = self.lstm(x, (hx, cx))
 #        hx = hx.view(hx.size(0),1,-1)
 #        cx = cx.view(cx.size(0),1,-1)
         
-        x = F.relu(self.fc3(out))
+        x = F.leaky_relu(self.fc3(out))
         return x ,hx,cx
     
     def parameter_update(self , source):
@@ -112,10 +112,10 @@ class DQN_CNN(nn.Module):
         self.fc3 = nn.Linear(args.hidden_size,args.action_space)
         
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.fc1(x.view(x.size(0),-1)))
-        x = F.relu(self.fc3(x))
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
+        x = F.leaky_relu(self.fc1(x.view(x.size(0),-1)))
+        x = F.leaky_relu(self.fc3(x))
         return x
     
     def parameter_update(self , source):
@@ -138,10 +138,10 @@ class Dueling_DQN(nn.Module):
         
         
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-#        x = F.relu(self.fc2(x))
-#        x = F.relu(self.fc3(x))
-        x = F.relu(self.fc_h(x))
+        x = F.leaky_relu(self.fc1(x))
+#        x = F.leaky_relu(self.fc2(x))
+#        x = F.leaky_relu(self.fc3(x))
+        x = F.leaky_relu(self.fc_h(x))
         v, a = self.fc_z_v(x), self.fc_z_a(x)  # Calculate value and advantage streams
         a_mean = torch.stack(a.chunk(self.action_space, 1), 1).mean(1)
         x = v.repeat(1, self.action_space) + a - a_mean.repeat(1, self.action_space)  # Combine streams
@@ -168,8 +168,8 @@ class Noisy_Distributional_Dueling_DQN(nn.Module):
         self.fc_z_a = NoisyLinear(args.hidden_size, self.action_space * args.atoms, std_init=args.noisy_std)
         
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc_h(x))
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc_h(x))
         v, a = self.fc_z_v(x), self.fc_z_a(x)  # Calculate value and advantage streams
         a_mean = torch.stack(a.chunk(self.action_space, 1), 1).mean(1)
         x = v.repeat(1, self.action_space) + a - a_mean.repeat(1, self.action_space)  # Combine streams
@@ -199,10 +199,10 @@ class rainbow_DQN(nn.Module):
     self.fc_z_a = NoisyLinear(args.hidden_size, action_space * args.atoms, std_init=args.noisy_std)
 
   def forward(self, x):
-    x = F.relu(self.conv1(x))
-    x = F.relu(self.conv2(x))
-    x = F.relu(self.conv3(x))
-    x = F.relu(self.fc_h(x.view(x.size(0), -1)))
+    x = F.leaky_relu(self.conv1(x))
+    x = F.leaky_relu(self.conv2(x))
+    x = F.leaky_relu(self.conv3(x))
+    x = F.leaky_relu(self.fc_h(x.view(x.size(0), -1)))
     v, a = self.fc_z_v(x), self.fc_z_a(x)  # Calculate value and advantage streams
     a_mean = torch.stack(a.chunk(self.action_space, 1), 1).mean(1)
     x = v.repeat(1, self.action_space) + a - a_mean.repeat(1, self.action_space)  # Combine streams

@@ -15,7 +15,7 @@ def get_args(name):
     parser = argparse.ArgumentParser(description='DQN')
     parser.add_argument('--name', type=str, default=name, help='stored name')
     
-    parser.add_argument('--epsilon', type=float, default=0.15, help='random action select probability')
+    parser.add_argument('--epsilon', type=float, default=0.33, help='random action select probability')
     
     
 #    parser.add_argument('--render', type=bool, default=True, help='enable rendering')
@@ -23,11 +23,12 @@ def get_args(name):
     
     parser.add_argument('--seed', type=int, default=123, help='Random seed')
     parser.add_argument('--disable-cuda', action='store_true', help='Disable CUDA')
-#    parser.add_argument('--game', type=str, default='CartPole-v1', help='gym game')
-    parser.add_argument('--game', type=str, default='Acrobot-v1', help='gym game')
-    parser.add_argument('--max-step', type=int, default=200, metavar='STEPS', help='Number of training steps (4x number of frames)')
-    parser.add_argument('--action-space', type=int, default=3 ,help='game action space')
-    parser.add_argument('--state-space', type=int, default=6 ,help='game action space')
+    parser.add_argument('--game', type=str, default='CartPole-v1', help='gym game')
+#    parser.add_argument('--game', type=str, default='Acrobot-v1', help='gym game')
+#    parser.add_argument('--game', type=str, default='MountainCar-v0', help='gym game')
+    parser.add_argument('--max-step', type=int, default=500, metavar='STEPS', help='Number of training steps (4x number of frames)')
+    parser.add_argument('--action-space', type=int, default=2 ,help='game action space')
+    parser.add_argument('--state-space', type=int, default=4 ,help='game action space')
     
 
     parser.add_argument('--max-episode-length', type=int, default=10000, metavar='LENGTH', help='Max episode length (0 to disable)')

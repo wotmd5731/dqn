@@ -10,39 +10,34 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 #import torchvision.transforms as T
-
-
+import sys
 
 
 import argparse
 from argument import get_args
-args = get_args('noisy_distributional_double_dueling_DQN')
-#args.memory_capacity = 100000
-#args.learn_start = 100000
-#args.render= True
+args = get_args('DQN')
 
-
-#args.game = 'MountainCar-v0'
-#args.max_step = 300
-#args.action_space =2 
-#args.state_space = 2
-
-
+args.game = 'MountainCar-v0'
+args.max_step = 500
+args.action_space =3 
+args.state_space = 2
+args.memory_capacity = 100000
+args.learn_start = 1000
+args.render= False
+args.epsilon = 0.2
+args.lr= 0.0001
 from env import Env
 env = Env(args)
 
-#args.memory_capacity = 1000
-#args.learn_start = 1000
-#args.render= True
 from memory import ReplayMemory 
 memory = ReplayMemory(args)
 
-
+#args.memory_capacity = 1000
+#args.learn_start = 1000
+args.render= True
 from agent import Agent
-""" dueling DQN """
-#agent = Agent(args,dueling=True)
-""" noisy_distributional_double_dueling_DQN """
-agent = Agent(args,noisy_distributional=True)
+agent = Agent(args)
+
 
 
 """
@@ -77,7 +72,6 @@ def test(main_episode):
             total_reward += reward
             reward_sum += reward
             if done:
-                
                 break
         T_rewards.append(reward_sum)
     ave_reward = total_reward/args.evaluation_episodes
@@ -98,6 +92,25 @@ def test(main_episode):
 
 
 
+action = 0
+import keyboard
+def call_r():
+    global action
+    action = 2
+    print('r')
+def call_l():
+    global action
+    print('l')
+    action = 0
+def call_d():
+    print('d')
+    global action
+    action = 1
+
+keyboard.add_hotkey('right', call_r)
+keyboard.add_hotkey('left', call_l)
+keyboard.add_hotkey('down', call_d)
+
 
 """
 randomize state push in memory
@@ -105,12 +118,14 @@ before main loop start
 """
 global_count = 0
 episode = 0
-while True:    
+while True:
+    
     episode += 1
     T=0
     state = env.reset()
     while T < args.max_step:
-        action = random.randrange(0,args.action_space)
+#        action = random.randrange(0,args.action_space)
+        env.render()
         next_state , reward , done, _ = env.step(action)
         memory.push([state, action, reward, next_state, done])
         state = next_state
@@ -119,23 +134,37 @@ while True:
         if done :
             break
     print("\r push : %d/%d  "%(global_count,args.learn_start),end='\r',flush=True)
+#    print("\r push : ",global_count,'/',args.learn_start,end='\r',flush=True)
+
     if global_count > args.learn_start:
         break
-
+keyboard.clear_all_hotkeys()
 print('')
+
+for ii in range(1000):
+    print(ii)
+    agent.basic_learn(memory)
+    if ii%100==0:
+        agent.target_dqn_update()
+            
+
+
 
 """
 main loop
 """
 global_count = 0
 episode = 0
+args.epsilon = 0.1
 while episode < args.max_episode_length:
     episode += 1
     T=0
     state = env.reset()
+#    args.epsilon -= 0.8/args.max_episode_length
     while T < args.max_step:
         T += 1
         global_count += 1
+        
         action = agent.get_action(state)
        
         next_state , reward , done, _ = env.step(action)
@@ -146,14 +175,7 @@ while episode < args.max_episode_length:
         state = next_state
         
         if global_count % args.replay_interval == 0 :
-            """ basic_DQN """
-#            agent.basic_learn(memory)
-            """ double DQN """
-#            agent.double_dqn_learn(memory)
-            """ noisy_distributional_double_dueling_DQN  """
-            agent.noisy_distributional_dddqn_train(memory)
-            agent.reset_noise()
-            
+            agent.basic_learn(memory)
         if global_count % args.target_update_interval == 0 :
             agent.target_dqn_update()
             
