@@ -155,7 +155,6 @@ main loop
 """
 global_count = 0
 episode = 0
-args.epsilon = 0.1
 while episode < args.max_episode_length:
     episode += 1
     T=0

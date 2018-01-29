@@ -15,15 +15,15 @@ import sys
 
 import argparse
 from argument import get_args
-args = get_args('DQN')
+args = get_args('DQN_rlfa')
 
-#args.game = 'MountainCar-v0'
-#args.max_step = 200
-#args.action_space =3 
-#args.state_space = 2
-#args.memory_capacity = 1000
-#args.learn_start = 1000
-#args.render= True
+args.game = 'MountainCar-v0'
+args.max_step = 200
+args.action_space =3 
+args.state_space = 2
+args.memory_capacity = 1000000
+args.learn_start = 1000000
+args.render= True
 from env import Env
 env = Env(args)
 
@@ -90,28 +90,35 @@ def test(main_episode):
 
 
 
+random_max_loop = 10
 
-"""
-randomize state push in memory
-before main loop start
-"""
 global_count = 0
 episode = 0
+max_reward=-100000000000000
 while True:
-    
+    done = 0
     episode += 1
     T=0
     state = env.reset()
+    t_reward =0
+    
     while T < args.max_step:
         action = random.randrange(0,args.action_space)
-        next_state , reward , done, _ = env.step(action)
-        memory.push([state, action, reward, next_state, done])
-        state = next_state
-        T += 1
-        global_count += 1
+        for ii in range(random.randint(1,random_max_loop)):
+            next_state , reward , done, _ = env.step(action)
+            t_reward += reward
+            memory.push([state, action, reward, next_state, done])
+            state = next_state
+            T += 1
+            global_count += 1
+            if done :
+                break
         if done :
             break
-    print("\r push : %d/%d  "%(global_count,args.learn_start),end='\r',flush=True)
+    
+    max_reward = max(t_reward,max_reward)
+    print("\r push : %d/%d  max reward %d "%(global_count,args.learn_start, max_reward),end='\r',flush=True)
+#    print("push : %d/%d  max reward %d "%(global_count,args.learn_start, max_reward))
 #    print("\r push : ",global_count,'/',args.learn_start,end='\r',flush=True)
 
     if global_count > args.learn_start:
@@ -124,30 +131,35 @@ main loop
 """
 global_count = 0
 episode = 0
+
+
+
 while episode < args.max_episode_length:
     episode += 1
     T=0
+    done = 0
     state = env.reset()
 #    args.epsilon -= 0.8/args.max_episode_length
     while T < args.max_step:
         T += 1
         global_count += 1
         
+#        action = random.randrange(0,args.action_space)
         action = agent.get_action(state)
-       
-        next_state , reward , done, _ = env.step(action)
-        if args.reward_clip > 0:
-            reward = max(min(reward, args.reward_clip), -args.reward_clip)  # Clip rewards
- 
-        memory.push([state, action, reward, next_state, done])
-        state = next_state
-        
-        if global_count % args.replay_interval == 0 :
-            agent.basic_learn(memory)
-        if global_count % args.target_update_interval == 0 :
-            agent.target_dqn_update()
+        for ii in range(random.randint(1,random_max_loop)):
+            next_state , reward , done, _ = env.step(action)
+            if args.reward_clip > 0:
+                reward = max(min(reward, args.reward_clip), -args.reward_clip)  # Clip rewards
+     
+            memory.push([state, action, reward, next_state, done])
+            state = next_state
             
-            
+            if global_count % args.replay_interval == 0 :
+                agent.basic_learn(memory)
+            if global_count % args.target_update_interval == 0 :
+                agent.target_dqn_update()
+            if done :
+                break 
         if done :
             break
     if episode % args.evaluation_interval == 0 :
