@@ -7,7 +7,8 @@ class Env():
     super().__init__()
     self.actions = [ 0, 1 ]
     self.env = gym.make(args.game)
-
+    self.env = self.env.unwrapped
+    
   def reset(self):
     return self.env.reset()
 
