@@ -15,6 +15,7 @@ dθ/dt : rate of change of the angle
 basic_DQN 
 - The basic DQN was created by looking at nature 2015 paper.
 - Paper : Playing Atari with Deep Reinforcement Learning
+          
           human level control through deep reinforcement learning
           
 Double DQN
@@ -45,14 +46,17 @@ Priority Experience Replay (PER) DQN
 Deep Recurrent Q Network (DRQN) using LSTM
 - lstm is learned using last state , that returned the sequectial experience memory.
 - but not conrrectly work. It works but do not learn.
-- Paper : DRQN_Playing FPS Games with Deep Reinforcement Learning
-          Asynchronous Methods for Deep Reinforcement Learning
-          DRQN with Prioritized Experience Replay, Double-Q
+- Paper : DRQN_Playing FPS Games with Deep Reinforcement Learning 
+
+          Asynchronous Methods for Deep Reinforcement Learning 
           
+          DRQN with Prioritized Experience Replay, Double-Q
+          
 
 Multi-step DQN w/o Replay memory 
 - n step learning , w/o memory , Using TD Error , Propotional PER 
 - There is no experience memory, so can not efficiently learning.
-- Paper : Asynchronous Methods for Deep Reinforcement Learning
+- Paper : Asynchronous Methods for Deep Reinforcement Learning 
+          
           Multi-step Reinforcement Learning: A Unifying Algorithm
           
