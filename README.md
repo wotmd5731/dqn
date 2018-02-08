@@ -7,10 +7,13 @@ basic_DQN
 - The basic DQN was created by looking at nature 2015 paper.
 
 Double DQN
-- ....
+- to Prevent Q-learning algorithm overestimation
+- Paper : Deep Reinforcement Learning with Double Q-learning
 
 Dueling DQN
-- ....
+- dueling network represents two separate estimators: 
+  one for the state value function and one for the state-dependent action advantage function.
+- Paper : Dueling Network Architectures for Deep Reinforcement Learning
 
 Distributional DQN
 - ....
