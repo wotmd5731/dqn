@@ -18,7 +18,7 @@ import argparse
 from argument import get_args
 args = get_args('noisy_distributional_double_dueling_DQN')
 #args.memory_capacity = 100000
-#args.learn_start = 100000
+args.learn_start = 10000
 #args.render= True
 
 

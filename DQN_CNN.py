@@ -17,6 +17,7 @@ from argument import get_args
 args = get_args('DQN_CNN')
 
 
+
 from env import Env,Env_CNN
 env = Env_CNN(args)
 
@@ -26,7 +27,7 @@ memory = ReplayMemory(args)
 
 
 args.memory_capacity = 200000
-args.learn_start = 200000
+args.learn_start = 2000
 #args.render= True
 from agent import Agent
 agent = Agent(args,dqn_cnn=True)

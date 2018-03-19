@@ -12,18 +12,20 @@ import matplotlib.pyplot as plt
 from model import DQN,Dueling_DQN,Noisy_Distributional_Dueling_DQN , DQN_CNN,DQN_LSTM
 
 
-use_cuda = torch.cuda.is_available() and False
-FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
-ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
-Tensor = FloatTensor
 glob_count=0    
+
 
 class Agent(nn.Module):
     
     def __init__(self,args,dueling=False,noisy_distributional=False,dqn_cnn=False,dqn_lstm=False):
         super().__init__()
         
+        self.FloatTensor = torch.cuda.FloatTensor if args.cuda else torch.FloatTensor
+        self.LongTensor = torch.cuda.LongTensor if args.cuda else torch.LongTensor
+        self.ByteTensor = torch.cuda.ByteTensor if args.cuda else torch.ByteTensor
+        self.Tensor = self.FloatTensor
+
+
         self.batch_size = args.batch_size 
         self.discount = args.discount
         self.max_gradient_norm = args.max_gradient_norm
@@ -43,9 +45,9 @@ class Agent(nn.Module):
             self.atoms = args.atoms
             self.v_min = args.V_min
             self.v_max = args.V_max
-            self.support = torch.linspace(args.V_min, args.V_max, args.atoms)  # Support (range) of z
+            self.support = torch.linspace(args.V_min, args.V_max, args.atoms).type(self.FloatTensor)  # Support (range) of z
             self.delta_z = (args.V_max - args.V_min) / (args.atoms - 1)
-            self.m = torch.zeros(args.batch_size, self.atoms).type(torch.FloatTensor)
+            self.m = torch.zeros(args.batch_size, self.atoms).type(self.FloatTensor)
             self.noisy_distributional = True
             
         elif dueling:
@@ -86,10 +88,10 @@ class Agent(nn.Module):
         global glob_count
         if self.dqn_lstm:
             if random.random() <= self.epsilon and not evaluate:
-                action ,hx,cx = self.main_dqn(Variable(FloatTensor(state.reshape(1,1,self.state_space)),volatile=True),hx,cx) #return max index call [1] 
+                action ,hx,cx = self.main_dqn(Variable(self.FloatTensor(state.reshape(1,1,self.state_space)),volatile=True),hx,cx) #return max index call [1] 
                 action = random.randrange(0,self.action_space)
             else:
-                action ,hx,cx = self.main_dqn(Variable(FloatTensor(state.reshape(1,1,self.state_space)),volatile=True),hx,cx) #return max index call [1] 
+                action ,hx,cx = self.main_dqn(Variable(self.FloatTensor(state.reshape(1,1,self.state_space)),volatile=True),hx,cx) #return max index call [1] 
                 action = action.max(2)[1].data[0][0]
 #                print(action)
             return action,hx,cx
@@ -107,13 +109,13 @@ class Agent(nn.Module):
 ##            plt
 #            plt.draw()
 #            plt.pause(0.0001)
-            action = (self.main_dqn(Variable(FloatTensor(state.reshape(1,self.state_space)),volatile=True)).data * self.support).sum(2).max(1)[1][0]
+            action = (self.main_dqn(Variable(self.FloatTensor(state.reshape(1,self.state_space)),volatile=True)).data * self.support).sum(2).max(1)[1][0]
         elif self.dqn_cnn:
             action = self.main_dqn(Variable(state,volatile=True)).max(1)[1].data[0]
         
         
         else :
-            ret = self.main_dqn(Variable(FloatTensor(state.reshape(1,self.state_space)),volatile=True))
+            ret = self.main_dqn(Variable(self.FloatTensor(state.reshape(1,self.state_space)),volatile=True))
 #            glob_count += 1
 #            if glob_count%100 ==0 :
 #                print(ret.data)
@@ -124,10 +126,10 @@ class Agent(nn.Module):
     def basic_learn(self,memory):
         batch = memory.sample(self.batch_size)
         [states, actions, rewards, next_states, dones] = zip(*batch)
-        state_batch = Variable(Tensor(states))
-        action_batch = Variable(LongTensor(actions))
-        reward_batch = Variable(Tensor(rewards))
-        next_states_batch = Variable(Tensor(next_states))
+        state_batch = Variable(self.Tensor(states))
+        action_batch = Variable(self.LongTensor(actions))
+        reward_batch = Variable(self.Tensor(rewards))
+        next_states_batch = Variable(self.Tensor(next_states))
         
         state_action_values = self.main_dqn(state_batch).gather(1, action_batch.view(-1,1)).view(-1)
         next_states_batch.volatile = True
@@ -156,11 +158,11 @@ class Agent(nn.Module):
         ss_ = data[:,:,6:10]
         dd = data[:,:,10]
         # seq_len(timestamp), batch, input_size
-        ss = Variable(Tensor(ss),volatile=True).view(batch_size,seq_len,self.state_space)
-        aa = Variable(Tensor(aa).type(LongTensor).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
-        rr = Variable(Tensor(rr).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
-        ss_ = Variable(Tensor(ss_),volatile=True).view(batch_size,seq_len,self.state_space)
-        dd = Variable(Tensor(dd).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
+        ss = Variable(self.Tensor(ss),volatile=True).view(batch_size,seq_len,self.state_space)
+        aa = Variable(self.Tensor(aa).type(self.LongTensor).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
+        rr = Variable(self.Tensor(rr).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
+        ss_ = Variable(self.Tensor(ss_),volatile=True).view(batch_size,seq_len,self.state_space)
+        dd = Variable(self.Tensor(dd).unsqueeze(2),volatile=True).view(batch_size,seq_len,1)
         
         cx = Variable(torch.zeros(1,1, self.hidden_size))
         hx = Variable(torch.zeros(1,1, self.hidden_size))
@@ -251,8 +253,8 @@ class Agent(nn.Module):
         next_states_batch = Variable(torch.stack(next_states).squeeze(1))
         
         
-        action_batch = Variable(LongTensor(actions))
-        reward_batch = Variable(Tensor(rewards))
+        action_batch = Variable(self.LongTensor(actions))
+        reward_batch = Variable(self.Tensor(rewards))
         
         state_action_values = self.main_dqn(state_batch).gather(1, action_batch.view(-1,1)).view(-1)
         next_states_batch.volatile = True
@@ -273,10 +275,10 @@ class Agent(nn.Module):
         
         
     def get_td_error(self,re,st,ac,st_):
-        re = Variable(Tensor([re])).view(1,-1)
-        st = Variable(Tensor([st])).view(1,-1)
-        st_ = Variable(Tensor([st_])).view(1,-1)
-        ac = Variable(LongTensor([ac])).view(1,-1)
+        re = Variable(self.Tensor([re])).view(1,-1)
+        st = Variable(self.Tensor([st])).view(1,-1)
+        st_ = Variable(self.Tensor([st_])).view(1,-1)
+        ac = Variable(self.LongTensor([ac])).view(1,-1)
         
         td_error = re + self.discount * self.target_dqn(st_).max(1)[0] - self.main_dqn(st).gather(1,ac)
         return abs(td_error.data[0][0])
@@ -287,10 +289,10 @@ class Agent(nn.Module):
         batch, batch_idx  = memory.sample(self.batch_size)
         
         [states, actions, rewards, next_states, dones] = zip(*batch)
-        state_batch = Variable(Tensor(states))
-        action_batch = Variable(LongTensor(actions))
-        reward_batch = Variable(Tensor(rewards))
-        next_states_batch = Variable(Tensor(next_states))
+        state_batch = Variable(self.Tensor(states))
+        action_batch = Variable(self.LongTensor(actions))
+        reward_batch = Variable(self.Tensor(rewards))
+        next_states_batch = Variable(self.Tensor(next_states))
         
         state_action_values = self.main_dqn(state_batch).gather(1, action_batch.view(-1,1)).view(-1)
         next_states_batch.volatile = True
@@ -319,10 +321,10 @@ class Agent(nn.Module):
     def double_dqn_learn(self,memory):
         batch = memory.sample(self.batch_size)
         [states, actions, rewards, next_states, dones] = zip(*batch)
-        state_batch = Variable(Tensor(states))
-        action_batch = Variable(LongTensor(actions))
-        reward_batch = Variable(Tensor(rewards))
-        next_states_batch = Variable(Tensor(next_states))
+        state_batch = Variable(self.Tensor(states))
+        action_batch = Variable(self.LongTensor(actions))
+        reward_batch = Variable(self.Tensor(rewards))
+        next_states_batch = Variable(self.Tensor(next_states))
         
         state_action_values = self.main_dqn(state_batch).gather(1, action_batch.view(-1,1)).view(-1)
         next_states_batch.volatile = True
@@ -387,8 +389,8 @@ class Agent(nn.Module):
         """
         # Optimized by https://github.com/tudor-berariu
         offset = torch.linspace(0, ((batch_sz - 1) * self.atoms), batch_sz)\
-            .type(torch.LongTensor)\
-            .unsqueeze(1).expand(batch_sz, self.atoms)
+            .type(self.LongTensor)\
+            .unsqueeze(1).expand(batch_sz, self.atoms).type(self.FloatTensor)
 
         m.view(-1).index_add_(0, (l + offset).view(-1),
                               (qa_probs * (u.float() - b)).view(-1))
@@ -404,16 +406,16 @@ class Agent(nn.Module):
         
         dones = list(dones)
         mask = [not dones[i] for i in range(len(dones))]
-        mask = LongTensor(mask).view(-1,1)
-        rewards = Tensor(rewards).view(-1,1)
+        mask = self.LongTensor(mask).view(-1,1)
+        rewards = self.Tensor(rewards).view(-1,1)
         
         
         
         
-        states = Variable(Tensor(states))
-        actions = Variable(LongTensor(actions))
-        rewards = (Tensor(rewards))
-        next_states = Variable(Tensor(next_states))
+        states = Variable(self.Tensor(states))
+        actions = Variable(self.LongTensor(actions))
+        rewards = (self.Tensor(rewards))
+        next_states = Variable(self.Tensor(next_states))
         
         
         # Compute probabilities of Q(s,a*)

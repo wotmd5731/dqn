@@ -13,6 +13,7 @@ from torch.autograd import Variable
 import sys
 
 
+
 import argparse
 from argument import get_args
 args = get_args('DQN')
@@ -22,7 +23,7 @@ args = get_args('DQN')
 #args.action_space =3 
 #args.state_space = 2
 #args.memory_capacity = 1000
-#args.learn_start = 1000
+args.learn_start = 1000
 #args.render= True
 from env import Env
 env = Env(args)
@@ -36,7 +37,7 @@ memory = ReplayMemory(args)
 from agent import Agent
 agent = Agent(args)
 
-
+print(args.cuda)
 
 """
 define test function

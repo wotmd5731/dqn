@@ -73,6 +73,7 @@ def get_args(name):
     args = parser.parse_args()
     " disable cuda "
     args.disable_cuda = True
+#    args.disable_cuda = False
         
     print(' ' * 26 + 'Options')
     for k, v in vars(args).items():
@@ -81,9 +82,10 @@ def get_args(name):
     random.seed(args.seed)
     torch.manual_seed(random.randint(1, 10000))
     if args.cuda:
-      torch.cuda.manual_seed(random.randint(1, 10000))
-     
-        
+        torch.cuda.manual_seed(random.randint(1, 10000))
+        torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    else :
+        torch.set_default_tensor_type('torch.FloatTensor')
       
     
     return args
